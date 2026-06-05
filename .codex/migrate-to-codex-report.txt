@@ -1,0 +1,11 @@
+Migration summary:
+  deploy mode: manual plugin-only follow-up
+  instructions: 0
+  skills: 0
+  subagents: 0
+  mcp servers: 0
+  plugins: 1
+
+Migration report:
+  added: .codex/config.toml - Enabled Codex plugin expo@claude-plugins-official from .claude/settings.json.
+  not_run: AGENTS.md - Full migrator dry-run would rewrite instructions; skipped because the selected migration scope was plugins only.
