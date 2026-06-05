@@ -1,56 +1,108 @@
-# Welcome to your Expo app 👋
+# Weeklist
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Weeklist is a simple weekly task manager built with Expo Router, React Native, TypeScript, Zustand, and MMKV.
 
-## Get started
+The app is intentionally focused on one question:
 
-1. Install dependencies
+> What do I need to do this week?
 
-   ```bash
-   npm install
-   ```
+It shows the current week as a continuous list of days. Each day can be expanded to manage its tasks inline, without navigating to another screen.
 
-2. Start the app
+## Current Functionality
 
-   ```bash
-   npx expo start
-   ```
+- Generates the current Monday-to-Sunday week automatically from the device date.
+- Shows the week range in the header, for example `June 1 – 7`.
+- Collapses all days by default except the current day.
+- Lets users tap a day header to expand or collapse it.
+- Shows task totals while a day is collapsed, such as `No tasks`, `1 task`, or `3 tasks`.
+- Marks the current day with `Today`, for example `5 Jun • Today`.
+- Supports creating tasks inline.
+- Supports editing task titles inline.
+- Supports completing and uncompleting tasks with a checkbox.
+- Dims completed tasks and keeps them struck through.
+- Supports deleting tasks from the day list.
+- Persists tasks locally through MMKV when the native module is available.
+- Falls back to in-memory storage when MMKV is unavailable, such as in an Expo Go session without the native module.
 
-In the output, you'll find options to open the app in a
+More details are in [docs/APP_FUNCTIONALITY.md](docs/APP_FUNCTIONALITY.md).
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## Tech Stack
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+- Expo SDK 56
+- Expo Router
+- React Native 0.85
+- React 19
+- TypeScript
+- Zustand
+- react-native-mmkv
 
-## Get a fresh project
+## Project Structure
 
-When you're ready, run:
-
-```bash
-npm run reset-project
+```text
+src/
+  app/
+    _layout.tsx        Expo Router stack layout
+    index.tsx          Root route that renders WeekScreen
+  components/
+    DaySection.tsx     Expandable day section and inline add-task control
+    TaskRow.tsx        Editable task row with complete/delete actions
+  screens/
+    WeekScreen.tsx     Current-week screen and date generation
+  storage/
+    weeklist-storage.ts  MMKV-backed task persistence with fallback
+  stores/
+    weeklist-store.ts  Zustand task state and mutations
+  types/
+    task.ts            Task and day types
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Getting Started
 
-### Other setup steps
+Install dependencies:
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+```bash
+npm install
+```
 
-## Learn more
+Start the Expo dev server:
 
-To learn more about developing your project with Expo, look at the following resources:
+```bash
+npx expo start
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+Run on web:
 
-## Join the community
+```bash
+npm run web
+```
 
-Join our community of developers creating universal apps.
+Run on iOS or Android:
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+```bash
+npm run ios
+npm run android
+```
+
+## Native Storage Note
+
+Weeklist uses `react-native-mmkv`, which depends on native modules. For persistent storage on iOS or Android, run the app in a development/native build that includes the MMKV and Nitro modules.
+
+Expo Go may not include those native modules. In that case the app still runs, but task storage falls back to memory for the current session.
+
+## Verification
+
+Run TypeScript checks:
+
+```bash
+npx tsc --noEmit
+```
+
+Build/export the web app:
+
+```bash
+npx expo export --platform web
+```
+
+## Non-Goals
+
+Weeklist is not a calendar, project management system, or collaboration tool. It does not currently include monthly views, time slots, recurring rules, accounts, cloud sync, priorities, or notifications.
