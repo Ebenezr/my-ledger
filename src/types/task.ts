@@ -9,6 +9,7 @@ export type Task = {
 export type DayTasks = {
   day: string;
   date: string;
+  isToday: boolean;
   isoDate: string;
   tasks: Task[];
 };

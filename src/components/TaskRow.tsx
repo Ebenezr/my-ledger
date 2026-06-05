@@ -10,7 +10,7 @@ type Props = {
 
 export function TaskRow({ task, onToggle, onChangeTitle, onDelete }: Props) {
   return (
-    <View style={styles.row}>
+    <View style={[styles.row, task.completed && styles.rowDone]}>
       <Pressable
         accessibilityRole="checkbox"
         accessibilityState={{ checked: task.completed }}
@@ -24,7 +24,7 @@ export function TaskRow({ task, onToggle, onChangeTitle, onDelete }: Props) {
         value={task.title}
         onChangeText={onChangeTitle}
         placeholder="Task"
-        placeholderTextColor="#70675d"
+        placeholderTextColor="#67645e"
         returnKeyType="done"
         style={[styles.title, task.completed && styles.titleDone]}
       />
@@ -47,12 +47,15 @@ const styles = StyleSheet.create({
     gap: 12,
     minHeight: 32,
   },
+  rowDone: {
+    opacity: 0.48,
+  },
   checkbox: {
     width: 24,
     height: 24,
     borderRadius: 4,
     borderWidth: 2,
-    borderColor: '#6f6558',
+    borderColor: '#77726a',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -61,21 +64,21 @@ const styles = StyleSheet.create({
     borderColor: '#c9491d',
   },
   check: {
-    color: '#241f1a',
+    color: '#171717',
     fontSize: 18,
     fontWeight: '700',
     lineHeight: 20,
   },
   title: {
     flex: 1,
-    color: '#2c2924',
+    color: '#202020',
     fontSize: 20,
     lineHeight: 24,
     paddingVertical: 0,
   },
   titleDone: {
     textDecorationLine: 'line-through',
-    color: '#5d554c',
+    color: '#67645e',
   },
   deleteButton: {
     width: 30,
@@ -87,7 +90,7 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   deleteText: {
-    color: '#5d554c',
+    color: '#67645e',
     fontSize: 24,
     lineHeight: 28,
   },
