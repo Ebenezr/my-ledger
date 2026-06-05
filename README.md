@@ -12,7 +12,10 @@ It shows the current week as a continuous list of days. Each day can be expanded
 
 - Generates the current Monday-to-Sunday week automatically from the device date.
 - Shows the week range in the header, for example `June 1 – 7`.
+- Lets users move to previous and future weeks with subtle header arrows.
+- Shows a small `Today` button when viewing a non-current week.
 - Collapses all days by default except the current day.
+- For non-current weeks, expands the first day that has tasks, or Monday when the week has no tasks.
 - Lets users tap a day header to expand or collapse it.
 - Shows task totals while a day is collapsed, such as `No tasks`, `1 task`, or `3 tasks`.
 - Marks the current day with `Today`, for example `5 Jun • Today`.
@@ -54,6 +57,8 @@ src/
     weeklist-store.ts  Zustand task state and mutations
   types/
     task.ts            Task and day types
+  utils/
+    week.ts            Generated week dates, range labels, default expansion
 ```
 
 ## Getting Started

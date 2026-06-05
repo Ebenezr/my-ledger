@@ -1,67 +1,38 @@
-import { useMemo, useState } from 'react';
-import { ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import {
+  Pressable,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { DaySection } from '@/components/DaySection';
 import { useWeeklistStore } from '@/stores/weeklist-store';
+import {
+  formatWeekRange,
+  getDefaultExpandedDay,
+  getWeekDays,
+} from '@/utils/week';
 import type { DayTasks } from '../types/task';
-
-const dayFormatter = new Intl.DateTimeFormat(undefined, { weekday: 'long' });
-const dateFormatter = new Intl.DateTimeFormat(undefined, {
-  day: 'numeric',
-  month: 'short',
-});
-const monthFormatter = new Intl.DateTimeFormat(undefined, { month: 'long' });
-
-function isoDate(date: Date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-
-  return `${year}-${month}-${day}`;
-}
-
-function getCurrentWeek() {
-  const today = new Date();
-  const todayIsoDate = isoDate(today);
-  const mondayOffset = (today.getDay() + 6) % 7;
-  const monday = new Date(today);
-  monday.setHours(0, 0, 0, 0);
-  monday.setDate(today.getDate() - mondayOffset);
-
-  return Array.from({ length: 7 }, (_, index) => {
-    const date = new Date(monday);
-    date.setDate(monday.getDate() + index);
-
-    return {
-      day: dayFormatter.format(date).toUpperCase(),
-      date: dateFormatter.format(date).replace(/^([A-Za-z]+) (\d+)$/, '$2 $1'),
-      isToday: isoDate(date) === todayIsoDate,
-      isoDate: isoDate(date),
-    };
-  });
-}
-
-function formatWeekRange(week: ReturnType<typeof getCurrentWeek>) {
-  const firstDay = new Date(`${week[0].isoDate}T00:00:00`);
-  const lastDay = new Date(`${week[week.length - 1].isoDate}T00:00:00`);
-  const firstMonth = monthFormatter.format(firstDay);
-  const lastMonth = monthFormatter.format(lastDay);
-
-  if (firstMonth === lastMonth) {
-    return `${firstMonth} ${firstDay.getDate()} – ${lastDay.getDate()}`;
-  }
-
-  return `${firstMonth} ${firstDay.getDate()} – ${lastMonth} ${lastDay.getDate()}`;
-}
 
 export function WeekScreen() {
   const { tasks, addTask, deleteTask, editTask, toggleTask } =
     useWeeklistStore();
-  const week = useMemo(() => getCurrentWeek(), []);
+  const [weekOffset, setWeekOffset] = useState(0);
+  const week = useMemo(() => getWeekDays(weekOffset), [weekOffset]);
   const weekRange = useMemo(() => formatWeekRange(week), [week]);
-  const todayIsoDate = useMemo(() => isoDate(new Date()), []);
-  const [expandedDay, setExpandedDay] = useState(todayIsoDate);
+  const defaultExpandedDay = useMemo(
+    () => getDefaultExpandedDay(week, tasks, weekOffset),
+    [tasks, week, weekOffset],
+  );
+  const [expandedDay, setExpandedDay] = useState(defaultExpandedDay);
+
+  useEffect(() => {
+    setExpandedDay(defaultExpandedDay);
+  }, [defaultExpandedDay]);
 
   const days: DayTasks[] = useMemo(
     () =>
@@ -77,16 +48,50 @@ export function WeekScreen() {
       <StatusBar barStyle='dark-content' />
       <SafeAreaView style={styles.safe}>
         <View style={styles.topBar}>
-          <View>
+          <View style={styles.headerContent}>
             <Text selectable style={styles.kicker}>
               WEEKLIST
             </Text>
-            <Text selectable style={styles.kickerSecond}>
-              This Week
-            </Text>
-            <Text selectable style={styles.title}>
-              {weekRange}
-            </Text>
+            <View style={styles.rangeRow}>
+              <Text selectable style={styles.title}>
+                {weekRange}
+              </Text>
+
+              <View style={styles.weekControls}>
+                {weekOffset !== 0 ? (
+                  <Pressable
+                    accessibilityRole='button'
+                    onPress={() => setWeekOffset(0)}
+                    style={({ pressed }) => [
+                      styles.todayButton,
+                      pressed && styles.pressed,
+                    ]}
+                  >
+                    <Text style={styles.todayButtonText}>Today</Text>
+                  </Pressable>
+                ) : null}
+
+                <Pressable
+                  accessibilityLabel='Previous week'
+                  accessibilityRole='button'
+                  hitSlop={10}
+                  onPress={() => setWeekOffset((current) => current - 1)}
+                  style={({ pressed }) => [styles.arrowButton, pressed && styles.pressed]}
+                >
+                  <Text style={styles.arrowText}>‹</Text>
+                </Pressable>
+
+                <Pressable
+                  accessibilityLabel='Next week'
+                  accessibilityRole='button'
+                  hitSlop={10}
+                  onPress={() => setWeekOffset((current) => current + 1)}
+                  style={({ pressed }) => [styles.arrowButton, pressed && styles.pressed]}
+                >
+                  <Text style={styles.arrowText}>›</Text>
+                </Pressable>
+              </View>
+            </View>
           </View>
         </View>
 
@@ -131,6 +136,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+  headerContent: {
+    flex: 1,
+  },
+  rangeRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 14,
+    justifyContent: 'space-between',
+    paddingTop: 2,
+  },
+  weekControls: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 4,
+  },
   content: {
     backgroundColor: '#deddd9',
     paddingBottom: 40,
@@ -141,18 +161,39 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: 2,
   },
-  kickerSecond: {
-    color: '#67645e',
-    fontSize: 14,
-    fontWeight: '700',
-    letterSpacing: 2,
-    paddingTop: 4,
-  },
   title: {
     color: '#171717',
+    flex: 1,
     fontSize: 18,
     fontWeight: '700',
     marginTop: 2,
+  },
+  todayButton: {
+    borderColor: '#bdb8af',
+    borderRadius: 999,
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  todayButtonText: {
+    color: '#67645e',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  arrowButton: {
+    alignItems: 'center',
+    height: 34,
+    justifyContent: 'center',
+    width: 28,
+  },
+  arrowText: {
+    color: '#67645e',
+    fontSize: 30,
+    fontWeight: '400',
+    lineHeight: 32,
+  },
+  pressed: {
+    opacity: 0.5,
   },
   settings: {
     color: '#67645e',

@@ -19,17 +19,17 @@ The root route is `src/app/index.tsx`, which renders `WeekScreen`.
 `WeekScreen` is responsible for:
 
 - Building the current Monday-to-Sunday week.
+- Applying the selected week offset.
 - Formatting the header week range.
 - Marking the current day.
-- Expanding the current day by default.
+- Choosing the default expanded day.
 - Passing task actions into each day section.
 
 The app header currently shows:
 
 ```text
 WEEKLIST
-This Week
-June 1 – 7
+June 1 – 7        ‹  ›
 ```
 
 The range is generated from the current week. If a week crosses months, both month names are shown, for example:
@@ -37,6 +37,22 @@ The range is generated from the current week. If a week crosses months, both mon
 ```text
 May 31 – June 6
 ```
+
+## Week Navigation
+
+Weeklist supports previous and next week navigation from the header.
+
+The selected week is represented by local `weekOffset` state:
+
+- `0` is the current week.
+- `-1` is the previous week.
+- `1` is the next week.
+
+The left arrow decreases `weekOffset`. The right arrow increases `weekOffset`.
+
+Weeks are not stored as data records. They are generated views over dates. Tasks remain the source of truth and are filtered into each generated day by ISO date.
+
+When viewing a non-current week, a small `Today` button appears. Tapping it resets `weekOffset` to `0`.
 
 ## Day Sections
 
@@ -60,6 +76,12 @@ Expanded days show:
 - An inline `Add a new task...` control.
 
 Only one day is expanded at a time. Tapping the open day collapses it. Tapping another day opens that day.
+
+Default expansion rules:
+
+- Current week: expand today.
+- Previous or future week: expand the first day with tasks.
+- Previous or future week with no tasks: expand Monday.
 
 ## Task Management
 
@@ -101,6 +123,13 @@ Each task belongs to one ISO date, for example:
 ```
 
 Day sections are generated from the current week and populated by filtering tasks by `task.date`.
+
+Week helpers live in `src/utils/week.ts`:
+
+- `getWeekDays(weekOffset)`
+- `formatWeekRange(days)`
+- `isToday(date)`
+- `getDefaultExpandedDay(days, tasks, weekOffset)`
 
 ## State Management
 
@@ -153,7 +182,6 @@ The current design follows a notebook-like layout:
 
 ## Known Limitations
 
-- No week navigation yet.
 - No drag-and-drop ordering.
 - No search.
 - No recurring tasks.
