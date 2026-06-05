@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import type { Task } from '../types/task';
 
 type Props = {
@@ -9,8 +9,30 @@ type Props = {
 };
 
 export function TaskRow({ task, onToggle, onChangeTitle, onDelete }: Props) {
+  function confirmDelete() {
+    Alert.alert('Delete task?', 'The task will be removed from this day.', [
+      {
+        text: 'Cancel',
+        style: 'cancel',
+      },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: onDelete,
+      },
+    ]);
+  }
+
   return (
-    <View style={[styles.row, task.completed && styles.rowDone]}>
+    <Pressable
+      accessibilityHint='Long press to delete this task'
+      onLongPress={confirmDelete}
+      style={({ pressed }) => [
+        styles.row,
+        task.completed && styles.rowDone,
+        pressed && styles.pressed,
+      ]}
+    >
       <Pressable
         accessibilityRole="checkbox"
         accessibilityState={{ checked: task.completed }}
@@ -28,15 +50,7 @@ export function TaskRow({ task, onToggle, onChangeTitle, onDelete }: Props) {
         returnKeyType="done"
         style={[styles.title, task.completed && styles.titleDone]}
       />
-
-      <Pressable
-        accessibilityLabel={`Delete ${task.title}`}
-        hitSlop={10}
-        onPress={onDelete}
-        style={({ pressed }) => [styles.deleteButton, pressed && styles.pressed]}>
-        <Text style={styles.deleteText}>×</Text>
-      </Pressable>
-    </View>
+    </Pressable>
   );
 }
 
@@ -80,18 +94,7 @@ const styles = StyleSheet.create({
     textDecorationLine: 'line-through',
     color: '#67645e',
   },
-  deleteButton: {
-    width: 30,
-    height: 30,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   pressed: {
     opacity: 0.5,
-  },
-  deleteText: {
-    color: '#67645e',
-    fontSize: 24,
-    lineHeight: 28,
   },
 });
