@@ -11,6 +11,8 @@ type Props = {
   onAddTask: (title: string) => void;
   onEditTask: (taskId: string, title: string) => void;
   onDeleteTask: (taskId: string) => void;
+  onMoveTaskDown: (taskId: string) => void;
+  onMoveTaskUp: (taskId: string) => void;
 };
 
 export function DaySection({
@@ -21,6 +23,8 @@ export function DaySection({
   onAddTask,
   onEditTask,
   onDeleteTask,
+  onMoveTaskDown,
+  onMoveTaskUp,
 }: Props) {
   const [isAddingTask, setIsAddingTask] = useState(false);
   const inputRef = useRef<TextInput>(null);
@@ -84,6 +88,8 @@ export function DaySection({
               onToggle={() => onToggleTask(task.id)}
               onChangeTitle={(title) => onEditTask(task.id, title)}
               onDelete={() => onDeleteTask(task.id)}
+              onMoveDown={() => onMoveTaskDown(task.id)}
+              onMoveUp={() => onMoveTaskUp(task.id)}
             />
           ))}
 

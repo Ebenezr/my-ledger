@@ -6,27 +6,44 @@ type Props = {
   onToggle: () => void;
   onChangeTitle: (title: string) => void;
   onDelete: () => void;
+  onMoveDown: () => void;
+  onMoveUp: () => void;
 };
 
-export function TaskRow({ task, onToggle, onChangeTitle, onDelete }: Props) {
-  function confirmDelete() {
-    Alert.alert('Delete task?', 'The task will be removed from this day.', [
+export function TaskRow({
+  task,
+  onToggle,
+  onChangeTitle,
+  onDelete,
+  onMoveDown,
+  onMoveUp,
+}: Props) {
+  function showActionMenu() {
+    Alert.alert('Task options', task.title, [
       {
-        text: 'Cancel',
-        style: 'cancel',
+        text: 'Move up',
+        onPress: onMoveUp,
+      },
+      {
+        text: 'Move down',
+        onPress: onMoveDown,
       },
       {
         text: 'Delete',
         style: 'destructive',
         onPress: onDelete,
       },
+      {
+        text: 'Cancel',
+        style: 'cancel',
+      },
     ]);
   }
 
   return (
     <Pressable
-      accessibilityHint='Long press to delete this task'
-      onLongPress={confirmDelete}
+      accessibilityHint='Long press for task options'
+      onLongPress={showActionMenu}
       style={({ pressed }) => [
         styles.row,
         task.completed && styles.rowDone,

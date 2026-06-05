@@ -10,7 +10,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { DaySection } from '@/components/DaySection';
-import { useWeeklistStore } from '@/stores/weeklist-store';
+import { sortTasksByOrder, useWeeklistStore } from '@/stores/weeklist-store';
 import {
   formatWeekRange,
   getDefaultExpandedDay,
@@ -19,8 +19,15 @@ import {
 import type { DayTasks } from '../types/task';
 
 export function WeekScreen() {
-  const { tasks, addTask, deleteTask, editTask, toggleTask } =
-    useWeeklistStore();
+  const {
+    tasks,
+    addTask,
+    deleteTask,
+    editTask,
+    moveTaskDown,
+    moveTaskUp,
+    toggleTask,
+  } = useWeeklistStore();
   const [weekOffset, setWeekOffset] = useState(0);
   const week = useMemo(() => getWeekDays(weekOffset), [weekOffset]);
   const weekRange = useMemo(() => formatWeekRange(week), [week]);
@@ -38,7 +45,7 @@ export function WeekScreen() {
     () =>
       week.map((day) => ({
         ...day,
-        tasks: tasks.filter((task) => task.date === day.isoDate),
+        tasks: sortTasksByOrder(tasks.filter((task) => task.date === day.isoDate)),
       })),
     [tasks, week],
   );
@@ -110,6 +117,8 @@ export function WeekScreen() {
               onAddTask={(title) => addTask(day.isoDate, title)}
               onEditTask={editTask}
               onDeleteTask={deleteTask}
+              onMoveTaskDown={moveTaskDown}
+              onMoveTaskUp={moveTaskUp}
             />
           ))}
         </ScrollView>

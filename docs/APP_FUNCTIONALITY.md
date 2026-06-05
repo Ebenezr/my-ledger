@@ -92,13 +92,17 @@ Users can:
 - Add a task inline from an expanded day.
 - Toggle a task complete or incomplete.
 - Edit task text directly in the row.
-- Delete a task from the row.
+- Long-press a task to open native task options.
+- Move a task up or down within its day.
+- Delete a task from its day.
 
 Completed tasks are:
 
 - Checked.
 - Struck through.
 - Dimmed as a full row.
+
+Manual ordering is per day. Moving a task up or down only changes its position relative to other tasks with the same ISO date.
 
 ## Data Model
 
@@ -112,7 +116,9 @@ type Task = {
   title: string;
   completed: boolean;
   date: string;
+  order: number;
   createdAt: string;
+  updatedAt: string;
 };
 ```
 
@@ -142,6 +148,8 @@ The Zustand store exposes:
 - `toggleTask(taskId)`
 - `editTask(taskId, title)`
 - `deleteTask(taskId)`
+- `moveTaskUp(taskId)`
+- `moveTaskDown(taskId)`
 
 Every mutation persists the full task list after updating state.
 

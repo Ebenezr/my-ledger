@@ -3,7 +3,9 @@ export type Task = {
   title: string;
   completed: boolean;
   date: string;
+  order: number;
   createdAt: string;
+  updatedAt: string;
 };
 
 export type WeekDay = {

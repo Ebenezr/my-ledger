@@ -23,7 +23,8 @@ It shows the current week as a continuous list of days. Each day can be expanded
 - Supports editing task titles inline.
 - Supports completing and uncompleting tasks with a checkbox.
 - Dims completed tasks and keeps them struck through.
-- Supports deleting tasks from the day list.
+- Supports long-press task actions for moving tasks up, moving tasks down, and deleting tasks.
+- Sorts tasks manually within each day.
 - Persists tasks locally through MMKV when the native module is available.
 - Falls back to in-memory storage when MMKV is unavailable, such as in an Expo Go session without the native module.
 
