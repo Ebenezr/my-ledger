@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
+import DateTimePicker, {
+  DateTimePickerAndroid,
+  type DateTimePickerEvent,
+} from '@react-native-community/datetimepicker';
 import {
+  Modal,
   Pressable,
   ScrollView,
   StatusBar,
@@ -16,6 +21,7 @@ import { sortTasksByOrder, useWeeklistStore } from '@/stores/weeklist-store';
 import {
   formatWeekRange,
   getDefaultExpandedDay,
+  getWeekOffsetFromDate,
   getWeekDays,
 } from '@/utils/week';
 import type { DayTasks } from '../types/task';
@@ -32,6 +38,8 @@ export function WeekScreen() {
     toggleTask,
   } = useWeeklistStore();
   const [weekOffset, setWeekOffset] = useState(0);
+  const [pickerVisible, setPickerVisible] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(new Date());
   const week = useMemo(() => getWeekDays(weekOffset), [weekOffset]);
   const currentWeek = useMemo(() => getWeekDays(0), []);
   const previousWeek = useMemo(() => getWeekDays(-1), []);
@@ -48,6 +56,44 @@ export function WeekScreen() {
   useEffect(() => {
     setExpandedDay(defaultExpandedDay);
   }, [defaultExpandedDay]);
+
+  function selectDate(date: Date) {
+    setSelectedDate(date);
+    setWeekOffset(getWeekOffsetFromDate(date));
+    setPickerVisible(false);
+  }
+
+  function handleDateChange(event: DateTimePickerEvent, date?: Date) {
+    if (event.type === 'set' && date) {
+      selectDate(date);
+    }
+  }
+
+  function openDatePicker() {
+    const visibleWeekDate = new Date(`${week[0].isoDate}T00:00:00`);
+    setSelectedDate(visibleWeekDate);
+
+    if (process.env.EXPO_OS === 'android') {
+      DateTimePickerAndroid.open({
+        value: visibleWeekDate,
+        mode: 'date',
+        display: 'calendar',
+        title: 'Choose a date',
+        positiveButton: {
+          label: 'Go',
+          textColor: '#c9491d',
+        },
+        negativeButton: {
+          label: 'Cancel',
+          textColor: '#67645e',
+        },
+        onChange: handleDateChange,
+      });
+      return;
+    }
+
+    setPickerVisible(true);
+  }
 
   const days: DayTasks[] = useMemo(
     () =>
@@ -111,9 +157,19 @@ export function WeekScreen() {
               WEEKLIST
             </Text>
             <View style={styles.rangeRow}>
-              <Text selectable style={styles.title}>
-                {weekRange}
-              </Text>
+              <Pressable
+                accessibilityLabel={`Jump to another week. Current range: ${weekRange}`}
+                accessibilityRole='button'
+                onPress={openDatePicker}
+                style={({ pressed }) => [
+                  styles.rangeButton,
+                  pressed && styles.pressed,
+                ]}
+              >
+                <Text selectable style={styles.title}>
+                  {weekRange}
+                </Text>
+              </Pressable>
 
               <View style={styles.weekControls}>
                 {weekOffset !== 0 ? (
@@ -191,6 +247,58 @@ export function WeekScreen() {
             />
           ))}
         </ScrollView>
+
+        {process.env.EXPO_OS === 'ios' ? (
+          <Modal
+            animationType='fade'
+            onRequestClose={() => setPickerVisible(false)}
+            transparent
+            visible={pickerVisible}
+          >
+            <Pressable
+              accessibilityRole='button'
+              onPress={() => setPickerVisible(false)}
+              style={styles.pickerBackdrop}
+            >
+              <Pressable
+                onPress={(event) => event.stopPropagation()}
+                style={styles.pickerContainer}
+              >
+                <View style={styles.pickerSurface}>
+                  <View style={styles.pickerHeader}>
+                    <View>
+                      <Text style={styles.pickerKicker}>WEEKLIST</Text>
+                      <Text style={styles.pickerTitle}>Choose a date</Text>
+                    </View>
+
+                    <Pressable
+                      accessibilityLabel='Close date picker'
+                      accessibilityRole='button'
+                      hitSlop={10}
+                      onPress={() => setPickerVisible(false)}
+                      style={({ pressed }) => [
+                        styles.pickerClose,
+                        pressed && styles.pressed,
+                      ]}
+                    >
+                      <Text style={styles.pickerCloseText}>×</Text>
+                    </Pressable>
+                  </View>
+
+                  <DateTimePicker
+                    accentColor='#c9491d'
+                    display='inline'
+                    mode='date'
+                    onChange={handleDateChange}
+                    style={styles.datePicker}
+                    themeVariant='light'
+                    value={selectedDate}
+                  />
+                </View>
+              </Pressable>
+            </Pressable>
+          </Modal>
+        ) : null}
       </SafeAreaView>
     </View>
   );
@@ -224,6 +332,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingTop: 2,
   },
+  rangeButton: {
+    flex: 1,
+  },
   weekControls: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -241,7 +352,6 @@ const styles = StyleSheet.create({
   },
   title: {
     color: '#171717',
-    flex: 1,
     fontSize: 18,
     fontWeight: '700',
     marginTop: 2,
@@ -272,6 +382,63 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.5,
+  },
+  pickerBackdrop: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(23, 23, 23, 0.34)',
+    flex: 1,
+    justifyContent: 'center',
+    padding: 24,
+  },
+  pickerContainer: {
+    maxWidth: 390,
+    width: '100%',
+  },
+  pickerSurface: {
+    backgroundColor: '#deddd9',
+    borderRadius: 8,
+    borderColor: '#bdb8af',
+    borderWidth: StyleSheet.hairlineWidth,
+    overflow: 'hidden',
+    paddingBottom: 8,
+  },
+  pickerHeader: {
+    alignItems: 'center',
+    borderBottomColor: '#c9c5be',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+  },
+  pickerKicker: {
+    color: '#77736d',
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 2,
+  },
+  pickerTitle: {
+    color: '#171717',
+    fontSize: 19,
+    fontWeight: '700',
+    paddingTop: 2,
+  },
+  pickerClose: {
+    alignItems: 'center',
+    height: 38,
+    justifyContent: 'center',
+    width: 38,
+  },
+  pickerCloseText: {
+    color: '#67645e',
+    fontSize: 30,
+    fontWeight: '300',
+    lineHeight: 32,
+  },
+  datePicker: {
+    backgroundColor: '#deddd9',
+    alignSelf: 'center',
+    width: 340,
   },
   settings: {
     color: '#67645e',
