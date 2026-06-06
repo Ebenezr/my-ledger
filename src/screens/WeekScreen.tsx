@@ -6,12 +6,12 @@ import DateTimePicker, {
 import {
   Modal,
   Pressable,
-  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CarryForwardPrompt } from '@/components/CarryForwardPrompt';
@@ -211,8 +211,11 @@ export function WeekScreen() {
           </View>
         </View>
 
-        <ScrollView
+        <KeyboardAwareScrollView
           contentContainerStyle={styles.content}
+          enableOnAndroid
+          extraScrollHeight={120}
+          keyboardShouldPersistTaps='handled'
           scrollEnabled={!isTaskDragging}
         >
           {showCarryForwardPrompt ? (
@@ -253,7 +256,7 @@ export function WeekScreen() {
               onChangeNote={addOrUpdateDayNote}
             />
           ))}
-        </ScrollView>
+        </KeyboardAwareScrollView>
 
         {process.env.EXPO_OS === 'ios' ? (
           <Modal
