@@ -11,6 +11,7 @@ type WeeklistState = {
   deleteTask: (taskId: string) => void;
   moveTaskUp: (taskId: string) => void;
   moveTaskDown: (taskId: string) => void;
+  carryForwardTasks: (sourceTaskIds: string[], targetDate: string) => void;
 };
 
 function taskId() {
@@ -161,4 +162,47 @@ export const useWeeklistStore = create<WeeklistState>((set) => ({
     set((state) => persist(state.tasks.filter((task) => task.id !== taskId))),
   moveTaskUp: (taskId) => set((state) => persist(moveTask(state.tasks, taskId, -1))),
   moveTaskDown: (taskId) => set((state) => persist(moveTask(state.tasks, taskId, 1))),
+  carryForwardTasks: (sourceTaskIds, targetDate) =>
+    set((state) => {
+      const sourcePositions = new Map(
+        sourceTaskIds.map((id, index) => [id, index]),
+      );
+      const alreadyCarriedIds = new Set(
+        state.tasks
+          .filter((task) => task.date === targetDate)
+          .map((task) => task.carriedFromTaskId)
+          .filter((id): id is string => Boolean(id)),
+      );
+      const sourceTasks = state.tasks
+        .filter(
+          (task) =>
+            sourcePositions.has(task.id) &&
+            !task.completed &&
+            !alreadyCarriedIds.has(task.id),
+        )
+        .sort(
+          (firstTask, secondTask) =>
+            (sourcePositions.get(firstTask.id) ?? 0) -
+            (sourcePositions.get(secondTask.id) ?? 0),
+        );
+
+      if (sourceTasks.length === 0) {
+        return state;
+      }
+
+      const now = new Date().toISOString();
+      const firstOrder = nextOrderForDate(state.tasks, targetDate);
+      const carriedTasks: Task[] = sourceTasks.map((task, index) => ({
+        id: taskId(),
+        title: task.title,
+        completed: false,
+        date: targetDate,
+        order: firstOrder + index,
+        createdAt: now,
+        updatedAt: now,
+        carriedFromTaskId: task.id,
+      }));
+
+      return persist([...state.tasks, ...carriedTasks]);
+    }),
 }));

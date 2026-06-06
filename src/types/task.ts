@@ -6,6 +6,7 @@ export type Task = {
   order: number;
   createdAt: string;
   updatedAt: string;
+  carriedFromTaskId?: string;
 };
 
 export type WeekDay = {

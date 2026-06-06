@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { CarryForwardPrompt } from '@/components/CarryForwardPrompt';
 import { DaySection } from '@/components/DaySection';
 import { WeeklySummary } from '@/components/WeeklySummary';
 import { sortTasksByOrder, useWeeklistStore } from '@/stores/weeklist-store';
@@ -23,6 +24,7 @@ export function WeekScreen() {
   const {
     tasks,
     addTask,
+    carryForwardTasks,
     deleteTask,
     editTask,
     moveTaskDown,
@@ -31,12 +33,17 @@ export function WeekScreen() {
   } = useWeeklistStore();
   const [weekOffset, setWeekOffset] = useState(0);
   const week = useMemo(() => getWeekDays(weekOffset), [weekOffset]);
+  const currentWeek = useMemo(() => getWeekDays(0), []);
+  const previousWeek = useMemo(() => getWeekDays(-1), []);
   const weekRange = useMemo(() => formatWeekRange(week), [week]);
   const defaultExpandedDay = useMemo(
     () => getDefaultExpandedDay(week, tasks, weekOffset),
     [tasks, week, weekOffset],
   );
   const [expandedDay, setExpandedDay] = useState(defaultExpandedDay);
+  const [dismissedCarryForwardKey, setDismissedCarryForwardKey] = useState<
+    string | null
+  >(null);
 
   useEffect(() => {
     setExpandedDay(defaultExpandedDay);
@@ -50,6 +57,36 @@ export function WeekScreen() {
       })),
     [tasks, week],
   );
+  const tasksToCarry = useMemo(() => {
+    const currentWeekDates = new Set(currentWeek.map((day) => day.isoDate));
+    const alreadyCarriedIds = new Set(
+      tasks
+        .filter(
+          (task) =>
+            currentWeekDates.has(task.date) && task.carriedFromTaskId,
+        )
+        .map((task) => task.carriedFromTaskId as string),
+    );
+
+    return previousWeek.flatMap((day) =>
+      sortTasksByOrder(
+        tasks.filter(
+          (task) =>
+            task.date === day.isoDate &&
+            !task.completed &&
+            !alreadyCarriedIds.has(task.id),
+        ),
+      ),
+    );
+  }, [currentWeek, previousWeek, tasks]);
+  const carryForwardKey = useMemo(
+    () => tasksToCarry.map((task) => task.id).join(':'),
+    [tasksToCarry],
+  );
+  const showCarryForwardPrompt =
+    weekOffset === 0 &&
+    tasksToCarry.length > 0 &&
+    dismissedCarryForwardKey !== carryForwardKey;
   const weeklyMetrics = useMemo(() => {
     const visibleTasks = days.flatMap((day) => day.tasks);
     const completedTasks = visibleTasks.filter((task) => task.completed).length;
@@ -117,6 +154,19 @@ export function WeekScreen() {
         </View>
 
         <ScrollView contentContainerStyle={styles.content}>
+          {showCarryForwardPrompt ? (
+            <CarryForwardPrompt
+              count={tasksToCarry.length}
+              onCarryForward={() =>
+                carryForwardTasks(
+                  tasksToCarry.map((task) => task.id),
+                  currentWeek[0].isoDate,
+                )
+              }
+              onDismiss={() => setDismissedCarryForwardKey(carryForwardKey)}
+            />
+          ) : null}
+
           <WeeklySummary
             completedTasks={weeklyMetrics.completedTasks}
             totalTasks={weeklyMetrics.totalTasks}
