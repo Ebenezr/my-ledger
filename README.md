@@ -14,6 +14,7 @@ It shows the current week as a continuous list of days. Each day can be expanded
 - Shows the week range in the header, for example `June 1 – 7`.
 - Lets users move to previous and future weeks with subtle header arrows.
 - Shows a small `Today` button when viewing a non-current week.
+- Shows a lightweight completion summary for every selected week.
 - Collapses all days by default except the current day.
 - For non-current weeks, expands the first day that has tasks, or Monday when the week has no tasks.
 - Lets users tap a day header to expand or collapse it.

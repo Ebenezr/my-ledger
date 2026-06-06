@@ -10,6 +10,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { DaySection } from '@/components/DaySection';
+import { WeeklySummary } from '@/components/WeeklySummary';
 import { sortTasksByOrder, useWeeklistStore } from '@/stores/weeklist-store';
 import {
   formatWeekRange,
@@ -49,6 +50,19 @@ export function WeekScreen() {
       })),
     [tasks, week],
   );
+  const weeklyMetrics = useMemo(() => {
+    const visibleTasks = days.flatMap((day) => day.tasks);
+    const completedTasks = visibleTasks.filter((task) => task.completed).length;
+    const totalTasks = visibleTasks.length;
+
+    return {
+      completedTasks,
+      incompleteTasks: totalTasks - completedTasks,
+      completionPercentage:
+        totalTasks === 0 ? 0 : Math.round((completedTasks / totalTasks) * 100),
+      totalTasks,
+    };
+  }, [days]);
 
   return (
     <View style={styles.app}>
@@ -103,6 +117,11 @@ export function WeekScreen() {
         </View>
 
         <ScrollView contentContainerStyle={styles.content}>
+          <WeeklySummary
+            completedTasks={weeklyMetrics.completedTasks}
+            totalTasks={weeklyMetrics.totalTasks}
+          />
+
           {days.map((day) => (
             <DaySection
               key={day.isoDate}

@@ -54,6 +54,23 @@ Weeks are not stored as data records. They are generated views over dates. Tasks
 
 When viewing a non-current week, a small `Today` button appears. Tapping it resets `weekOffset` to `0`.
 
+## Weekly Review
+
+Every selected week shows a small summary below the header and above Monday.
+
+The summary is calculated from tasks already assigned to the visible week's ISO dates. It shows:
+
+- Completed tasks out of total tasks.
+- Completion percentage.
+
+For example:
+
+```text
+12 of 16 completed        75%
+```
+
+The summary updates as users navigate between weeks. It adds no storage and does not create week records.
+
 ## Day Sections
 
 Each day is rendered by `src/components/DaySection.tsx`.
