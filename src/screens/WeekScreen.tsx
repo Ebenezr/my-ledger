@@ -35,11 +35,13 @@ export function WeekScreen() {
     carryForwardTasks,
     deleteTask,
     editTask,
+    reorderTasks,
     toggleTask,
   } = useWeeklistStore();
   const [weekOffset, setWeekOffset] = useState(0);
   const [pickerVisible, setPickerVisible] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [isTaskDragging, setIsTaskDragging] = useState(false);
   const week = useMemo(() => getWeekDays(weekOffset), [weekOffset]);
   const currentWeek = useMemo(() => getWeekDays(0), []);
   const previousWeek = useMemo(() => getWeekDays(-1), []);
@@ -209,7 +211,10 @@ export function WeekScreen() {
           </View>
         </View>
 
-        <ScrollView contentContainerStyle={styles.content}>
+        <ScrollView
+          contentContainerStyle={styles.content}
+          scrollEnabled={!isTaskDragging}
+        >
           {showCarryForwardPrompt ? (
             <CarryForwardPrompt
               count={tasksToCarry.length}
@@ -243,6 +248,8 @@ export function WeekScreen() {
               onAddTask={(title) => addTask(day.isoDate, title)}
               onEditTask={editTask}
               onDeleteTask={deleteTask}
+              onReorderTasks={reorderTasks}
+              onDragStateChange={setIsTaskDragging}
               onChangeNote={addOrUpdateDayNote}
             />
           ))}

@@ -9,6 +9,8 @@ type Props = {
   onToggle: () => void;
   onChangeTitle: (title: string) => void;
   onDelete: () => void;
+  onDragStart?: () => void;
+  isDragging?: boolean;
 };
 
 export function TaskRow({
@@ -16,6 +18,8 @@ export function TaskRow({
   onToggle,
   onChangeTitle,
   onDelete,
+  onDragStart,
+  isDragging = false,
 }: Props) {
   function renderAction(
     label: string,
@@ -43,6 +47,7 @@ export function TaskRow({
 
   return (
     <ReanimatedSwipeable
+      enabled={!isDragging}
       containerStyle={styles.swipeable}
       dragOffsetFromLeftEdge={12}
       dragOffsetFromRightEdge={12}
@@ -63,7 +68,13 @@ export function TaskRow({
       }
       rightThreshold={44}
     >
-      <View style={[styles.row, task.completed && styles.rowDone]}>
+      <View
+        style={[
+          styles.row,
+          task.completed && styles.rowDone,
+          isDragging && styles.rowDragging,
+        ]}
+      >
         <Pressable
           accessibilityRole='checkbox'
           accessibilityState={{ checked: task.completed }}
@@ -82,6 +93,24 @@ export function TaskRow({
           returnKeyType='done'
           style={[styles.title, task.completed && styles.titleDone]}
         />
+
+        {onDragStart ? (
+          <Pressable
+            accessibilityHint='Hold and move to reorder this task'
+            accessibilityLabel='Reorder task'
+            accessibilityRole='button'
+            delayLongPress={180}
+            disabled={isDragging}
+            hitSlop={8}
+            onLongPress={onDragStart}
+            style={({ pressed }) => [
+              styles.dragHandle,
+              pressed && styles.dragHandlePressed,
+            ]}
+          >
+            <Text style={styles.dragHandleText}>≡</Text>
+          </Pressable>
+        ) : null}
       </View>
     </ReanimatedSwipeable>
   );
@@ -100,6 +129,10 @@ const styles = StyleSheet.create({
   },
   rowDone: {
     opacity: 0.48,
+  },
+  rowDragging: {
+    opacity: 0.72,
+    transform: [{ scale: 0.99 }],
   },
   checkbox: {
     width: 24,
@@ -130,6 +163,21 @@ const styles = StyleSheet.create({
   titleDone: {
     textDecorationLine: 'line-through',
     color: '#67645e',
+  },
+  dragHandle: {
+    alignItems: 'center',
+    height: 44,
+    justifyContent: 'center',
+    width: 34,
+  },
+  dragHandlePressed: {
+    opacity: 0.45,
+  },
+  dragHandleText: {
+    color: '#77736d',
+    fontSize: 24,
+    fontWeight: '500',
+    lineHeight: 26,
   },
   action: {
     alignItems: 'center',

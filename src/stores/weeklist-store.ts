@@ -17,6 +17,7 @@ type WeeklistState = {
   deleteTask: (taskId: string) => void;
   moveTaskUp: (taskId: string) => void;
   moveTaskDown: (taskId: string) => void;
+  reorderTasks: (date: string, orderedTaskIds: string[]) => void;
   carryForwardTasks: (sourceTaskIds: string[], targetDate: string) => void;
   addOrUpdateDayNote: (date: string, content: string) => void;
   deleteDayNote: (date: string) => void;
@@ -171,6 +172,52 @@ export const useWeeklistStore = create<WeeklistState>((set) => ({
     set((state) => persist(state.tasks.filter((task) => task.id !== taskId))),
   moveTaskUp: (taskId) => set((state) => persist(moveTask(state.tasks, taskId, -1))),
   moveTaskDown: (taskId) => set((state) => persist(moveTask(state.tasks, taskId, 1))),
+  reorderTasks: (date, orderedTaskIds) =>
+    set((state) => {
+      const dayTasks = sortTasksByOrder(
+        state.tasks.filter((task) => task.date === date),
+      );
+      const dayTaskIds = new Set(dayTasks.map((task) => task.id));
+      const seenTaskIds = new Set<string>();
+      const nextTaskIds = orderedTaskIds.filter((taskId) => {
+        if (!dayTaskIds.has(taskId) || seenTaskIds.has(taskId)) {
+          return false;
+        }
+
+        seenTaskIds.add(taskId);
+        return true;
+      });
+
+      dayTasks.forEach((task) => {
+        if (!seenTaskIds.has(task.id)) {
+          nextTaskIds.push(task.id);
+        }
+      });
+
+      if (
+        nextTaskIds.length !== dayTasks.length ||
+        nextTaskIds.every((taskId, index) => taskId === dayTasks[index].id)
+      ) {
+        return state;
+      }
+
+      const nextOrder = new Map(
+        nextTaskIds.map((taskId, index) => [taskId, index]),
+      );
+      const now = new Date().toISOString();
+
+      return persist(
+        state.tasks.map((task) =>
+          task.date === date
+            ? {
+                ...task,
+                order: nextOrder.get(task.id) ?? task.order,
+                updatedAt: now,
+              }
+            : task,
+        ),
+      );
+    }),
   carryForwardTasks: (sourceTaskIds, targetDate) =>
     set((state) => {
       const sourcePositions = new Map(

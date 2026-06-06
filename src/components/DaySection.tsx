@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import type { DayNote, DayTasks } from '../types/task';
+import DraggableFlatList, {
+  type RenderItemParams,
+} from 'react-native-draggable-flatlist';
+import type { DayNote, DayTasks, Task } from '../types/task';
 import { TaskRow } from './TaskRow';
 
 type Props = {
@@ -12,6 +15,8 @@ type Props = {
   onAddTask: (title: string) => void;
   onEditTask: (taskId: string, title: string) => void;
   onDeleteTask: (taskId: string) => void;
+  onReorderTasks: (date: string, orderedTaskIds: string[]) => void;
+  onDragStateChange: (isDragging: boolean) => void;
   onChangeNote: (date: string, content: string) => void;
 };
 
@@ -24,6 +29,8 @@ export function DaySection({
   onAddTask,
   onEditTask,
   onDeleteTask,
+  onReorderTasks,
+  onDragStateChange,
   onChangeNote,
 }: Props) {
   const [isAddingTask, setIsAddingTask] = useState(false);
@@ -46,6 +53,23 @@ export function DaySection({
     }
 
     setIsAddingTask(false);
+  }
+
+  function renderTask({
+    item,
+    drag,
+    isActive,
+  }: RenderItemParams<Task>) {
+    return (
+      <TaskRow
+        task={item}
+        isDragging={isActive}
+        onToggle={() => onToggleTask(item.id)}
+        onChangeTitle={(title) => onEditTask(item.id, title)}
+        onDelete={() => onDeleteTask(item.id)}
+        onDragStart={drag}
+      />
+    );
   }
 
   return (
@@ -98,15 +122,24 @@ export function DaySection({
             value={noteContent}
           />
 
-          {day.tasks.map((task) => (
-            <TaskRow
-              key={task.id}
-              task={task}
-              onToggle={() => onToggleTask(task.id)}
-              onChangeTitle={(title) => onEditTask(task.id, title)}
-              onDelete={() => onDeleteTask(task.id)}
-            />
-          ))}
+          <DraggableFlatList
+            activationDistance={4}
+            contentContainerStyle={styles.taskListContent}
+            data={day.tasks}
+            keyExtractor={(task) => task.id}
+            onDragBegin={() => onDragStateChange(true)}
+            onDragEnd={({ data }) => {
+              onReorderTasks(
+                day.isoDate,
+                data.map((task) => task.id),
+              );
+              onDragStateChange(false);
+            }}
+            onRelease={() => onDragStateChange(false)}
+            renderItem={renderTask}
+            scrollEnabled={false}
+            style={styles.taskList}
+          />
 
           {isAddingTask ? (
             <TextInput
@@ -190,6 +223,12 @@ const styles = StyleSheet.create({
     textAlign: 'right',
   },
   tasks: {
+    gap: 10,
+  },
+  taskList: {
+    flexGrow: 0,
+  },
+  taskListContent: {
     gap: 10,
   },
   noteInput: {
