@@ -23,12 +23,12 @@ import type { DayTasks } from '../types/task';
 export function WeekScreen() {
   const {
     tasks,
+    dayNotes,
     addTask,
+    addOrUpdateDayNote,
     carryForwardTasks,
     deleteTask,
     editTask,
-    moveTaskDown,
-    moveTaskUp,
     toggleTask,
   } = useWeeklistStore();
   const [weekOffset, setWeekOffset] = useState(0);
@@ -176,6 +176,7 @@ export function WeekScreen() {
             <DaySection
               key={day.isoDate}
               day={day}
+              note={dayNotes.find((note) => note.date === day.isoDate)}
               isExpanded={expandedDay === day.isoDate}
               onToggleExpanded={() =>
                 setExpandedDay((current) =>
@@ -186,8 +187,7 @@ export function WeekScreen() {
               onAddTask={(title) => addTask(day.isoDate, title)}
               onEditTask={editTask}
               onDeleteTask={deleteTask}
-              onMoveTaskDown={moveTaskDown}
-              onMoveTaskUp={moveTaskUp}
+              onChangeNote={addOrUpdateDayNote}
             />
           ))}
         </ScrollView>

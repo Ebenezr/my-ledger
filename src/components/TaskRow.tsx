@@ -1,4 +1,7 @@
-import { Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import ReanimatedSwipeable, {
+  type SwipeableMethods,
+} from 'react-native-gesture-handler/ReanimatedSwipeable';
 import type { Task } from '../types/task';
 
 type Props = {
@@ -6,8 +9,6 @@ type Props = {
   onToggle: () => void;
   onChangeTitle: (title: string) => void;
   onDelete: () => void;
-  onMoveDown: () => void;
-  onMoveUp: () => void;
 };
 
 export function TaskRow({
@@ -15,68 +16,87 @@ export function TaskRow({
   onToggle,
   onChangeTitle,
   onDelete,
-  onMoveDown,
-  onMoveUp,
 }: Props) {
-  function showActionMenu() {
-    Alert.alert('Task options', task.title, [
-      {
-        text: 'Move up',
-        onPress: onMoveUp,
-      },
-      {
-        text: 'Move down',
-        onPress: onMoveDown,
-      },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: onDelete,
-      },
-      {
-        text: 'Cancel',
-        style: 'cancel',
-      },
-    ]);
+  function renderAction(
+    label: string,
+    style: typeof styles.doneAction | typeof styles.deleteAction,
+    onPress: () => void,
+    swipeable: SwipeableMethods,
+  ) {
+    return (
+      <Pressable
+        accessibilityRole='button'
+        onPress={() => {
+          swipeable.close();
+          onPress();
+        }}
+        style={({ pressed }) => [
+          styles.action,
+          style,
+          pressed && styles.actionPressed,
+        ]}
+      >
+        <Text style={styles.actionText}>{label}</Text>
+      </Pressable>
+    );
   }
 
   return (
-    <Pressable
-      accessibilityHint='Long press for task options'
-      onLongPress={showActionMenu}
-      style={({ pressed }) => [
-        styles.row,
-        task.completed && styles.rowDone,
-        pressed && styles.pressed,
-      ]}
+    <ReanimatedSwipeable
+      containerStyle={styles.swipeable}
+      dragOffsetFromLeftEdge={12}
+      dragOffsetFromRightEdge={12}
+      friction={2}
+      leftThreshold={44}
+      overshootLeft={false}
+      overshootRight={false}
+      renderLeftActions={(_, __, swipeable) =>
+        renderAction(
+          task.completed ? 'Undo' : 'Done',
+          styles.doneAction,
+          onToggle,
+          swipeable,
+        )
+      }
+      renderRightActions={(_, __, swipeable) =>
+        renderAction('Delete', styles.deleteAction, onDelete, swipeable)
+      }
+      rightThreshold={44}
     >
-      <Pressable
-        accessibilityRole="checkbox"
-        accessibilityState={{ checked: task.completed }}
-        hitSlop={10}
-        onPress={onToggle}
-        style={[styles.checkbox, task.completed && styles.checkboxDone]}>
-        {task.completed && <Text style={styles.check}>✓</Text>}
-      </Pressable>
+      <View style={[styles.row, task.completed && styles.rowDone]}>
+        <Pressable
+          accessibilityRole='checkbox'
+          accessibilityState={{ checked: task.completed }}
+          hitSlop={10}
+          onPress={onToggle}
+          style={[styles.checkbox, task.completed && styles.checkboxDone]}
+        >
+          {task.completed && <Text style={styles.check}>✓</Text>}
+        </Pressable>
 
-      <TextInput
-        value={task.title}
-        onChangeText={onChangeTitle}
-        placeholder="Task"
-        placeholderTextColor="#67645e"
-        returnKeyType="done"
-        style={[styles.title, task.completed && styles.titleDone]}
-      />
-    </Pressable>
+        <TextInput
+          value={task.title}
+          onChangeText={onChangeTitle}
+          placeholder='Task'
+          placeholderTextColor='#67645e'
+          returnKeyType='done'
+          style={[styles.title, task.completed && styles.titleDone]}
+        />
+      </View>
+    </ReanimatedSwipeable>
   );
 }
 
 const styles = StyleSheet.create({
+  swipeable: {
+    overflow: 'hidden',
+  },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    minHeight: 32,
+    minHeight: 44,
+    backgroundColor: '#deddd9',
   },
   rowDone: {
     opacity: 0.48,
@@ -111,7 +131,24 @@ const styles = StyleSheet.create({
     textDecorationLine: 'line-through',
     color: '#67645e',
   },
-  pressed: {
-    opacity: 0.5,
+  action: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 44,
+    width: 92,
+  },
+  doneAction: {
+    backgroundColor: '#c9491d',
+  },
+  deleteAction: {
+    backgroundColor: '#a65349',
+  },
+  actionText: {
+    color: '#f5f1ea',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  actionPressed: {
+    opacity: 0.75,
   },
 });

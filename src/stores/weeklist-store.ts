@@ -1,10 +1,16 @@
 import { create } from 'zustand';
 
-import { readStoredTasks, writeStoredTasks } from '@/storage/weeklist-storage';
-import type { Task } from '@/types/task';
+import {
+  readStoredDayNotes,
+  readStoredTasks,
+  writeStoredDayNotes,
+  writeStoredTasks,
+} from '@/storage/weeklist-storage';
+import type { DayNote, Task } from '@/types/task';
 
 type WeeklistState = {
   tasks: Task[];
+  dayNotes: DayNote[];
   addTask: (date: string, title: string) => void;
   toggleTask: (taskId: string) => void;
   editTask: (taskId: string, title: string) => void;
@@ -12,6 +18,8 @@ type WeeklistState = {
   moveTaskUp: (taskId: string) => void;
   moveTaskDown: (taskId: string) => void;
   carryForwardTasks: (sourceTaskIds: string[], targetDate: string) => void;
+  addOrUpdateDayNote: (date: string, content: string) => void;
+  deleteDayNote: (date: string) => void;
 };
 
 function taskId() {
@@ -113,6 +121,7 @@ function moveTask(tasks: Task[], taskId: string, direction: -1 | 1) {
 
 export const useWeeklistStore = create<WeeklistState>((set) => ({
   tasks: normalizeTasks(readStoredTasks()),
+  dayNotes: readStoredDayNotes(),
   addTask: (date, title) =>
     set((state) => {
       const now = new Date().toISOString();
@@ -204,5 +213,42 @@ export const useWeeklistStore = create<WeeklistState>((set) => ({
       }));
 
       return persist([...state.tasks, ...carriedTasks]);
+    }),
+  addOrUpdateDayNote: (date, content) =>
+    set((state) => {
+      const nextContent = content.trim();
+
+      if (!nextContent) {
+        const dayNotes = state.dayNotes.filter((note) => note.date !== date);
+        writeStoredDayNotes(dayNotes);
+        return { dayNotes };
+      }
+
+      const existingNote = state.dayNotes.find((note) => note.date === date);
+      const now = new Date().toISOString();
+      const dayNotes = existingNote
+        ? state.dayNotes.map((note) =>
+            note.date === date
+              ? { ...note, content: nextContent, updatedAt: now }
+              : note,
+          )
+        : [
+            ...state.dayNotes,
+            {
+              date,
+              content: nextContent,
+              createdAt: now,
+              updatedAt: now,
+            },
+          ];
+
+      writeStoredDayNotes(dayNotes);
+      return { dayNotes };
+    }),
+  deleteDayNote: (date) =>
+    set((state) => {
+      const dayNotes = state.dayNotes.filter((note) => note.date !== date);
+      writeStoredDayNotes(dayNotes);
+      return { dayNotes };
     }),
 }));

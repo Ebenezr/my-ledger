@@ -1,37 +1,42 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import type { DayTasks } from '../types/task';
+import type { DayNote, DayTasks } from '../types/task';
 import { TaskRow } from './TaskRow';
 
 type Props = {
   day: DayTasks;
+  note?: DayNote;
   isExpanded: boolean;
   onToggleExpanded: () => void;
   onToggleTask: (taskId: string) => void;
   onAddTask: (title: string) => void;
   onEditTask: (taskId: string, title: string) => void;
   onDeleteTask: (taskId: string) => void;
-  onMoveTaskDown: (taskId: string) => void;
-  onMoveTaskUp: (taskId: string) => void;
+  onChangeNote: (date: string, content: string) => void;
 };
 
 export function DaySection({
   day,
+  note,
   isExpanded,
   onToggleExpanded,
   onToggleTask,
   onAddTask,
   onEditTask,
   onDeleteTask,
-  onMoveTaskDown,
-  onMoveTaskUp,
+  onChangeNote,
 }: Props) {
   const [isAddingTask, setIsAddingTask] = useState(false);
+  const [noteContent, setNoteContent] = useState(note?.content ?? '');
   const inputRef = useRef<TextInput>(null);
   const taskSummary =
     day.tasks.length === 0
       ? 'No tasks'
       : `${day.tasks.length} ${day.tasks.length === 1 ? 'task' : 'tasks'}`;
+
+  useEffect(() => {
+    setNoteContent(note?.content ?? '');
+  }, [day.isoDate, note?.content]);
 
   function handleSubmit(title: string) {
     const nextTitle = title.trim();
@@ -81,6 +86,18 @@ export function DaySection({
 
       {isExpanded ? (
         <View style={styles.tasks}>
+          <TextInput
+            multiline
+            onBlur={() => onChangeNote(day.isoDate, noteContent)}
+            onChangeText={setNoteContent}
+            placeholder='Add a note...'
+            placeholderTextColor='#77736d'
+            scrollEnabled={false}
+            style={styles.noteInput}
+            textAlignVertical='top'
+            value={noteContent}
+          />
+
           {day.tasks.map((task) => (
             <TaskRow
               key={task.id}
@@ -88,8 +105,6 @@ export function DaySection({
               onToggle={() => onToggleTask(task.id)}
               onChangeTitle={(title) => onEditTask(task.id, title)}
               onDelete={() => onDeleteTask(task.id)}
-              onMoveDown={() => onMoveTaskDown(task.id)}
-              onMoveUp={() => onMoveTaskUp(task.id)}
             />
           ))}
 
@@ -176,6 +191,15 @@ const styles = StyleSheet.create({
   },
   tasks: {
     gap: 10,
+  },
+  noteInput: {
+    color: '#5f5c56',
+    fontSize: 17,
+    lineHeight: 24,
+    minHeight: 48,
+    paddingBottom: 8,
+    paddingHorizontal: 0,
+    paddingTop: 0,
   },
   input: {
     fontSize: 18,

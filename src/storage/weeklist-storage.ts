@@ -1,6 +1,7 @@
-import type { Task } from '@/types/task';
+import type { DayNote, Task } from '@/types/task';
 
 const TASKS_KEY = 'tasks';
+const DAY_NOTES_KEY = 'dayNotes';
 
 type StringStorage = {
   getString: (key: string) => string | undefined;
@@ -11,7 +12,7 @@ declare const require: (moduleName: string) => {
   createMMKV?: (config: { id: string }) => StringStorage;
 };
 
-let memoryValue: string | undefined;
+const memoryValues = new Map<string, string>();
 let storage: StringStorage | null | undefined;
 
 function getStorage() {
@@ -29,22 +30,38 @@ function getStorage() {
   return storage;
 }
 
-export function readStoredTasks() {
-  const value = getStorage()?.getString(TASKS_KEY) ?? memoryValue;
+function readStoredValue<T>(key: string) {
+  const value = getStorage()?.getString(key) ?? memoryValues.get(key);
 
   if (!value) {
-    return [];
+    return [] as T[];
   }
 
   try {
-    return JSON.parse(value) as Task[];
+    return JSON.parse(value) as T[];
   } catch {
-    return [];
+    return [] as T[];
   }
 }
 
+function writeStoredValue<T>(key: string, items: T[]) {
+  const value = JSON.stringify(items);
+  memoryValues.set(key, value);
+  getStorage()?.set(key, value);
+}
+
+export function readStoredTasks() {
+  return readStoredValue<Task>(TASKS_KEY);
+}
+
 export function writeStoredTasks(tasks: Task[]) {
-  const value = JSON.stringify(tasks);
-  memoryValue = value;
-  getStorage()?.set(TASKS_KEY, value);
+  writeStoredValue(TASKS_KEY, tasks);
+}
+
+export function readStoredDayNotes() {
+  return readStoredValue<DayNote>(DAY_NOTES_KEY);
+}
+
+export function writeStoredDayNotes(dayNotes: DayNote[]) {
+  writeStoredValue(DAY_NOTES_KEY, dayNotes);
 }

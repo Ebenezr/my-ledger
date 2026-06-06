@@ -9,6 +9,13 @@ export type Task = {
   carriedFromTaskId?: string;
 };
 
+export type DayNote = {
+  date: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type WeekDay = {
   day: string;
   date: string;
