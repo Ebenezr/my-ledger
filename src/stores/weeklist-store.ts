@@ -7,6 +7,7 @@ import {
   writeStoredTasks,
 } from '@/storage/weeklist-storage';
 import type { DayNote, Task } from '@/types/task';
+import { syncTodayWidget } from '@/widgets/today-widget-data';
 
 type WeeklistState = {
   tasks: Task[];
@@ -77,6 +78,7 @@ function normalizeTasks(tasks: Task[]) {
 
 function persist(tasks: Task[]) {
   writeStoredTasks(tasks);
+  syncTodayWidget(tasks);
   return { tasks };
 }
 
@@ -120,8 +122,11 @@ function moveTask(tasks: Task[], taskId: string, direction: -1 | 1) {
   });
 }
 
+const initialTasks = normalizeTasks(readStoredTasks());
+syncTodayWidget(initialTasks);
+
 export const useWeeklistStore = create<WeeklistState>((set) => ({
-  tasks: normalizeTasks(readStoredTasks()),
+  tasks: initialTasks,
   dayNotes: readStoredDayNotes(),
   addTask: (date, title) =>
     set((state) => {

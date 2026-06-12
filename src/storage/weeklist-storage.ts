@@ -50,6 +50,26 @@ function writeStoredValue<T>(key: string, items: T[]) {
   getStorage()?.set(key, value);
 }
 
+export function readStoredJson<T>(key: string, fallback: T) {
+  const value = getStorage()?.getString(key) ?? memoryValues.get(key);
+
+  if (!value) {
+    return fallback;
+  }
+
+  try {
+    return JSON.parse(value) as T;
+  } catch {
+    return fallback;
+  }
+}
+
+export function writeStoredJson<T>(key: string, value: T) {
+  const serializedValue = JSON.stringify(value);
+  memoryValues.set(key, serializedValue);
+  getStorage()?.set(key, serializedValue);
+}
+
 export function readStoredTasks() {
   return readStoredValue<Task>(TASKS_KEY);
 }

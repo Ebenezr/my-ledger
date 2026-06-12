@@ -8,7 +8,11 @@
     "scheme": "myledger",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/expo.icon",
+      "bundleIdentifier": "com.ebukosia.myledger",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -26,6 +30,43 @@
     },
     "plugins": [
       "expo-router",
+      "./plugins/with-android-workmanager-resolution",
+      [
+        "expo-widgets",
+        {
+          "bundleIdentifier": "com.ebukosia.myledger.widgets",
+          "groupIdentifier": "group.com.ebukosia.myledger",
+          "widgets": [
+            {
+              "name": "TodayWidget",
+              "displayName": "Today",
+              "description": "Shows today's My-Ledger tasks.",
+              "supportedFamilies": [
+                "systemMedium",
+                "systemLarge"
+              ]
+            }
+          ]
+        }
+      ],
+      [
+        "react-native-android-widget",
+        {
+          "widgets": [
+            {
+              "name": "Today",
+              "label": "Today",
+              "description": "Shows today's My-Ledger tasks.",
+              "minWidth": "250dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 3,
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 1800000
+            }
+          ]
+        }
+      ],
       [
         "expo-splash-screen",
         {
@@ -64,6 +105,15 @@
               }
             }
           }
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./local/assets/images/icon.png",
+          "color": "#ffffff",
+          "defaultChannel": "default",
+          "enableBackgroundRemoteNotifications": false
         }
       ]
     ],
