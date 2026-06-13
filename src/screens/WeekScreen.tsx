@@ -4,14 +4,16 @@ import DateTimePicker, {
   type DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
 import {
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   Pressable,
+  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CarryForwardPrompt } from '@/components/CarryForwardPrompt';
@@ -153,110 +155,116 @@ export function WeekScreen() {
     <View style={styles.app}>
       <StatusBar barStyle='dark-content' />
       <SafeAreaView style={styles.safe}>
-        <View style={styles.topBar}>
-          <View style={styles.headerContent}>
-            <Text selectable style={styles.kicker}>
-              WEEKLIST
-            </Text>
-            <View style={styles.rangeRow}>
-              <Pressable
-                accessibilityLabel={`Jump to another week. Current range: ${weekRange}`}
-                accessibilityRole='button'
-                onPress={openDatePicker}
-                style={({ pressed }) => [
-                  styles.rangeButton,
-                  pressed && styles.pressed,
-                ]}
-              >
-                <Text selectable style={styles.title}>
-                  {weekRange}
-                </Text>
-              </Pressable>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={0}
+          style={styles.keyboardAvoiding}
+        >
+          <View style={styles.topBar}>
+            <View style={styles.headerContent}>
+              <Text selectable style={styles.kicker}>
+                WEEKLIST
+              </Text>
+              <View style={styles.rangeRow}>
+                <Pressable
+                  accessibilityLabel={`Jump to another week. Current range: ${weekRange}`}
+                  accessibilityRole='button'
+                  onPress={openDatePicker}
+                  style={({ pressed }) => [
+                    styles.rangeButton,
+                    pressed && styles.pressed,
+                  ]}
+                >
+                  <Text selectable style={styles.title}>
+                    {weekRange}
+                  </Text>
+                </Pressable>
 
-              <View style={styles.weekControls}>
-                {weekOffset !== 0 ? (
+                <View style={styles.weekControls}>
+                  {weekOffset !== 0 ? (
+                    <Pressable
+                      accessibilityRole='button'
+                      onPress={() => setWeekOffset(0)}
+                      style={({ pressed }) => [
+                        styles.todayButton,
+                        pressed && styles.pressed,
+                      ]}
+                    >
+                      <Text style={styles.todayButtonText}>Today</Text>
+                    </Pressable>
+                  ) : null}
+
                   <Pressable
+                    accessibilityLabel='Previous week'
                     accessibilityRole='button'
-                    onPress={() => setWeekOffset(0)}
-                    style={({ pressed }) => [
-                      styles.todayButton,
-                      pressed && styles.pressed,
-                    ]}
+                    hitSlop={10}
+                    onPress={() => setWeekOffset((current) => current - 1)}
+                    style={({ pressed }) => [styles.arrowButton, pressed && styles.pressed]}
                   >
-                    <Text style={styles.todayButtonText}>Today</Text>
+                    <Text style={styles.arrowText}>‹</Text>
                   </Pressable>
-                ) : null}
 
-                <Pressable
-                  accessibilityLabel='Previous week'
-                  accessibilityRole='button'
-                  hitSlop={10}
-                  onPress={() => setWeekOffset((current) => current - 1)}
-                  style={({ pressed }) => [styles.arrowButton, pressed && styles.pressed]}
-                >
-                  <Text style={styles.arrowText}>‹</Text>
-                </Pressable>
-
-                <Pressable
-                  accessibilityLabel='Next week'
-                  accessibilityRole='button'
-                  hitSlop={10}
-                  onPress={() => setWeekOffset((current) => current + 1)}
-                  style={({ pressed }) => [styles.arrowButton, pressed && styles.pressed]}
-                >
-                  <Text style={styles.arrowText}>›</Text>
-                </Pressable>
+                  <Pressable
+                    accessibilityLabel='Next week'
+                    accessibilityRole='button'
+                    hitSlop={10}
+                    onPress={() => setWeekOffset((current) => current + 1)}
+                    style={({ pressed }) => [styles.arrowButton, pressed && styles.pressed]}
+                  >
+                    <Text style={styles.arrowText}>›</Text>
+                  </Pressable>
+                </View>
               </View>
             </View>
           </View>
-        </View>
 
-        <KeyboardAwareScrollView
-          contentContainerStyle={styles.content}
-          enableOnAndroid
-          extraScrollHeight={120}
-          keyboardShouldPersistTaps='handled'
-          scrollEnabled={!isTaskDragging}
-        >
-          {showCarryForwardPrompt ? (
-            <CarryForwardPrompt
-              count={tasksToCarry.length}
-              onCarryForward={() =>
-                carryForwardTasks(
-                  tasksToCarry.map((task) => task.id),
-                  currentWeek[0].isoDate,
-                )
-              }
-              onDismiss={() => setDismissedCarryForwardKey(carryForwardKey)}
+          <ScrollView
+            contentContainerStyle={styles.content}
+            keyboardDismissMode='interactive'
+            keyboardShouldPersistTaps='handled'
+            scrollEnabled={!isTaskDragging}
+            style={styles.scroll}
+          >
+            {showCarryForwardPrompt ? (
+              <CarryForwardPrompt
+                count={tasksToCarry.length}
+                onCarryForward={() =>
+                  carryForwardTasks(
+                    tasksToCarry.map((task) => task.id),
+                    currentWeek[0].isoDate,
+                  )
+                }
+                onDismiss={() => setDismissedCarryForwardKey(carryForwardKey)}
+              />
+            ) : null}
+
+            <WeeklySummary
+              completedTasks={weeklyMetrics.completedTasks}
+              totalTasks={weeklyMetrics.totalTasks}
             />
-          ) : null}
 
-          <WeeklySummary
-            completedTasks={weeklyMetrics.completedTasks}
-            totalTasks={weeklyMetrics.totalTasks}
-          />
-
-          {days.map((day) => (
-            <DaySection
-              key={day.isoDate}
-              day={day}
-              note={dayNotes.find((note) => note.date === day.isoDate)}
-              isExpanded={expandedDay === day.isoDate}
-              onToggleExpanded={() =>
-                setExpandedDay((current) =>
-                  current === day.isoDate ? '' : day.isoDate,
-                )
-              }
-              onToggleTask={toggleTask}
-              onAddTask={(title) => addTask(day.isoDate, title)}
-              onEditTask={editTask}
-              onDeleteTask={deleteTask}
-              onReorderTasks={reorderTasks}
-              onDragStateChange={setIsTaskDragging}
-              onChangeNote={addOrUpdateDayNote}
-            />
-          ))}
-        </KeyboardAwareScrollView>
+            {days.map((day) => (
+              <DaySection
+                key={day.isoDate}
+                day={day}
+                note={dayNotes.find((note) => note.date === day.isoDate)}
+                isExpanded={expandedDay === day.isoDate}
+                onToggleExpanded={() =>
+                  setExpandedDay((current) =>
+                    current === day.isoDate ? '' : day.isoDate,
+                  )
+                }
+                onToggleTask={toggleTask}
+                onAddTask={(title) => addTask(day.isoDate, title)}
+                onEditTask={editTask}
+                onDeleteTask={deleteTask}
+                onReorderTasks={reorderTasks}
+                onDragStateChange={setIsTaskDragging}
+                onChangeNote={addOrUpdateDayNote}
+              />
+            ))}
+          </ScrollView>
+        </KeyboardAvoidingView>
 
         {process.env.EXPO_OS === 'ios' ? (
           <Modal
@@ -323,6 +331,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#deddd9',
   },
+  keyboardAvoiding: {
+    flex: 1,
+  },
   topBar: {
     backgroundColor: '#deddd9',
     paddingHorizontal: 28,
@@ -352,7 +363,10 @@ const styles = StyleSheet.create({
   },
   content: {
     backgroundColor: '#deddd9',
-    paddingBottom: 40,
+    paddingBottom: 160,
+  },
+  scroll: {
+    flex: 1,
   },
   kicker: {
     color: '#67645e',

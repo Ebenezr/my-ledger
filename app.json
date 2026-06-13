@@ -16,7 +16,8 @@
     },
     "android": {
       "predictiveBackGestureEnabled": false,
-      "package": "com.ebukosia.myledger"
+      "package": "com.ebukosia.myledger",
+      "softwareKeyboardLayoutMode": "resize"
     },
     "web": {
       "output": "static",
